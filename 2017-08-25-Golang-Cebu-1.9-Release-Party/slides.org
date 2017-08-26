@@ -1,0 +1,164 @@
+* Agenda
+** Properties
+** Origins
+** Go or Not Go?
+** Syntax and patterns for concurrency
+* Language/Runtime
+** C-ish / Java-ish Syntax
+** Compiled language
+** Statically typed
+** Garbage collected
+* Origins: Pain at Google
+
+Rob Pike, Ken Thompson, and Robert Griesemer
+were compiling.
+
+[[./xkcd-303-compiling.png]]
+
+from https://xkcd.com/303/
+http://radar.oreilly.com/2012/09/golang.html
+
+* Origins: C/C++ and Scaling
+
+Go at Google, article by Rob Pike
+https://talks.golang.org/2012/splash.article
+
+** thousands of programmers
+A code base shared with thousands of them.
+
+And it's about more than just the language.
+The tools and intended workflows
+must support this, too.
+
+** yes, build times
+nobody wants to wait forever
+
+** processor cores
+Concurrency can't be an afterthought anymore.
+
+* Why Go? Concurrency!
+** Concurrency is not Parallelism
+https://www.youtube.com/watch?v=cN_DpYBzKso
+** Concurrency with CSP
+Simple abstractions
+-> easier to understand than Threads, Mutexes, Locks
+
+https://en.wikipedia.org/wiki/Communicating_sequential_processes
+
+** 1st class
+goroutines and channels are first class citizens:
+Supported by syntax and runtime
+
+** Competitor: Actor model
+See Scala / Erlang
+
+* Why Go? Language Simplicity!
+Few concepts, little magic.
+
+*keywords*
+• 25 Go
+• 33 in Python 3 (in 3.7 adding async and await)
+• 50 in Java
+• 48 in C+
+
+Counter examples:
+• @decorators in Python
+• Templates in C++
+
+* Why Go? Workflow!
+Built-in tooling
+
+** play.golang.org
+https://play.golang.org/
+** go get w/ vendor support
+** import "github.com/Sirupsen/logrus"
+** go fmt
+** batteries included
+The standard example: super-scalable HTTP server
+** single binary
+Deployment is so simple. Mostly no tar files,
+Docker or other tooling needed.
+
+Include simple data in the binaries with projects like
+https://github.com/elazarl/go-bindata-assetfs
+* Why Go? Mature Language Evolution
+** Regular, small increments
+Major release every 6 months.
+** Not a kid anymore: 1.9
+* Yay? Interfaces
+
+#+begin_src go
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+#+end_src
+
+• Needs getting used to.
+• Needs toolsupport to find implementations.
+  (Emacs + silversearcher + helm
+   not good enough anymore)
+
+** No (impl) inheritance
+
+* Yay? No Generics
+** Unexpected missing stdlib support
+Finding an element of a collection, anyone?
+Implement it with a for-loop. :(
+
+https://stackoverflow.com/questions/38654383/how-to-search-for-an-element-in-a-golang-slice#38654444
+* Yay? Struct inheritance
+
+* Yay? Libraries, too many or too few
+Often multiple libraries, not *the* clear choice.
+For some domains, there's simply none,
+since it's OSS driven, not enterprise-driven.
+
+• Example: Full SOAP/WSDL support
+• Example: logging, long time no consensus
+  (logrus seems to get there https://github.com/sirupsen/logrus/ )
+* Not Go? For Real-time
+There's a GC running loose.
+* Not Go? Shell hacking
+Quickly want to parse some data from the web?
+IMHO Bash, (i)python, rubys, perl are faster choices
+* Not Go? Classic web dev
+WP, RoR, Django shine here IMHO
+
+It needs a long time to develop
+frameworks and tools of that sophistication and stability
+* So, when Go?
+IMHO the sweet spot is:
+
+Micro-service implementing an API for batch-jobs
+
+* Syntax: Concurrency
+
+[[./req.go]]
+
+Running it with:
+
+#+begin_src bash
+./g build req.go
+cat some-islands.txt | ./req
+cat 500-islands.txt | ./req
+#+end_src
+
+
+* Sources: URLs
+
+https://en.wikipedia.org/w/api.php?action=query&generator=links&redirects&gpllimit=500&format=jsonfm&titles=List_of_islands_of_the_Philippines&prop=info&inprop=url
+https://en.wikipedia.org/w/api.php?action=query&generator=links&redirects&gpllimit=500&format=json&titles=List_of_islands_of_the_Philippines&prop=info&inprop=url
+
+#+begin_src python
+import requests
+r = requests.get("https://en.wikipedia.org/w/api.php?action=query&generator=links&redirects&gpllimit=500&format=json&titles=List_of_islands_of_the_Philippines&prop=info&inprop=url")
+j = r.json()
+for _, page in j["query"]["pages"].items(): print(page["canonicalurl"])
+import codecs
+f = codecs.open("island-urls.txt", "w", encoding="utf-8")
+for _, page in j["query"]["pages"].items(): f.write(page["canonicalurl"] + "\n")
+#+end_src
